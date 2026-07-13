@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>医药箱药品保质期管理系统</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>💊</text></svg>" />
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- ============== 顶部导航栏 ============== -->
+    <header class="topbar" role="banner">
+      <div class="topbar-inner">
+        <a href="#" class="brand" aria-label="医药箱药品保质期管理系统">
+          <span class="brand-logo" aria-hidden="true">💊</span>
+          <span class="brand-text">
+            <strong>医药箱</strong>
+            <small>保质期管理</small>
+          </span>
+        </a>
+
+        <nav class="main-nav" aria-label="主导航">
+          <button class="nav-btn active" data-view="dashboard" type="button">
+            <span class="nav-ico">📊</span><span>仪表盘</span>
+          </button>
+          <button class="nav-btn" data-view="list" type="button">
+            <span class="nav-ico">💊</span><span>药品管理</span>
+          </button>
+        </nav>
+
+        <div class="top-actions">
+          <button class="btn btn-ghost" id="btn-qr" type="button" title="生成二维码贴纸">
+            <span aria-hidden="true">📱</span> 二维码
+          </button>
+          <button class="btn btn-ghost" id="btn-export" type="button" title="导出数据为 JSON">
+            <span aria-hidden="true">⬇️</span> 导出
+          </button>
+          <label class="btn btn-ghost" id="btn-import-label" title="导入 JSON 文件">
+            <span aria-hidden="true">⬆️</span> 导入
+            <input id="import-input" type="file" accept="application/json,.json" hidden />
+          </label>
+          <button class="btn btn-primary" id="btn-add" type="button">
+            <span aria-hidden="true">＋</span> 新增药品
+          </button>
+          <button class="btn btn-secondary" id="btn-add-dev" type="button" title="新增常用器材">
+            <span aria-hidden="true">＋</span> 新增器材
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============== 主体 ============== -->
+    <main class="container">
+      <!-- 仪表盘视图 -->
+      <section class="view view-dashboard active" id="view-dashboard" aria-label="仪表盘">
+        <div class="page-head">
+          <h1>仪表盘</h1>
+          <p class="muted" id="today-line">今天是 ____</p>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid" id="stats-grid">
+          <article class="stat-card stat-total">
+            <div class="stat-icon" aria-hidden="true">💊</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-total">0</div>
+              <div class="stat-label">药品 <span id="stat-total-full" class="muted-inline">(总计 0)</span></div>
+            </div>
+          </article>
+          <article class="stat-card stat-dev">
+            <div class="stat-icon" aria-hidden="true">🩺</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-dev">0</div>
+              <div class="stat-label">常用器材</div>
+            </div>
+          </article>
+          <article class="stat-card stat-warning">
+            <div class="stat-icon" aria-hidden="true">⚠️</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-warning">0</div>
+              <div class="stat-label">即将过期（≤30 天）</div>
+            </div>
+          </article>
+          <article class="stat-card stat-danger">
+            <div class="stat-icon" aria-hidden="true">⛔</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-danger">0</div>
+              <div class="stat-label">已过期</div>
+            </div>
+          </article>
+          <article class="stat-card stat-month">
+            <div class="stat-icon" aria-hidden="true">📅</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-month">0</div>
+              <div class="stat-label">本月需关注</div>
+            </div>
+          </article>
+        </div>
+
+        <!-- 图表区 -->
+        <div class="dashboard-grid">
+          <article class="card chart-card">
+            <header class="card-head">
+              <h2>分类分布</h2>
+              <span class="muted">按类别统计药品数量</span>
+            </header>
+            <div class="chart-wrap" id="chart-category">
+              <p class="muted">暂无数据</p>
+            </div>
+            <ul class="legend" id="legend-category"></ul>
+          </article>
+
+          <article class="card list-card">
+            <header class="card-head">
+              <h2>优先关注</h2>
+              <a href="#" class="muted link" data-jump="list">查看全部 →</a>
+            </header>
+            <ul class="mini-list" id="priority-list">
+              <li class="empty muted">暂无即将过期或已过期药品</li>
+            </ul>
+          </article>
+        </div>
+
+        <!-- 空状态 -->
+        <div class="empty-state card hidden" id="dashboard-empty">
+          <div class="empty-illo" aria-hidden="true">🧰</div>
+          <h2>药箱空空如也</h2>
+          <p class="muted">录入第一盒药，开启智能保质期管理；也可以先加载示例数据体验。</p>
+          <div class="empty-actions">
+            <button class="btn btn-primary" type="button" id="btn-sample">加载示例数据</button>
+            <button class="btn btn-ghost" type="button" id="btn-sample-add">立即新增</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 药品列表视图 -->
+      <section class="view view-list hidden" id="view-list" aria-label="药品管理">
+        <div class="page-head">
+          <h1>药品管理</h1>
+          <p class="muted">管理家中常备药与常用器材</p>
+        </div>
+
+        <div class="tab-bar" role="tablist" aria-label="记录类型">
+          <button class="tab active" data-kind="" type="button" role="tab" aria-selected="true">全部</button>
+          <button class="tab" data-kind="med" type="button" role="tab" aria-selected="false">💊 药品</button>
+          <button class="tab" data-kind="dev" type="button" role="tab" aria-selected="false">🩺 器材</button>
+        </div>
+
+        <!-- 工具栏 -->
+        <div class="toolbar card">
+          <div class="search-wrap">
+            <span class="search-ico" aria-hidden="true">🔎</span>
+            <input id="search-input" type="search" placeholder="搜索药品名称或批号…" />
+          </div>
+          <div class="filter-wrap">
+            <label class="select-wrap">
+              <span class="muted">分类</span>
+              <select id="filter-category">
+                <option value="">全部分类</option>
+              </select>
+            </label>
+            <label class="select-wrap">
+              <span class="muted">状态</span>
+              <select id="filter-status">
+                <option value="">全部状态</option>
+                <option value="normal">正常</option>
+                <option value="warning">即将过期</option>
+                <option value="danger">已过期</option>
+              </select>
+            </label>
+            <label class="select-wrap">
+              <span class="muted">排序</span>
+              <select id="sort-by">
+                <option value="expiry-asc">到期日期 ↑</option>
+                <option value="expiry-desc">到期日期 ↓</option>
+                <option value="name-asc">名称 A→Z</option>
+                <option value="name-desc">名称 Z→A</option>
+                <option value="category">分类</option>
+                <option value="status">状态优先级</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <!-- 列表 -->
+        <div class="list-results" id="list-results"></div>
+      </section>
+    </main>
+
+    <footer class="footer muted">
+      <span>数据保存在本机浏览器（localStorage），不会上传任何服务器。</span>
+      <span>© <span id="year"></span> 医药箱</span>
+    </footer>
+  </div>
+
+  <!-- ============== 表单弹窗 ============== -->
+  <div class="modal" id="modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-overlay" data-close></div>
+    <div class="modal-panel card" role="document">
+      <header class="modal-head">
+        <h2 id="modal-title">新增药品</h2>
+        <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+      </header>
+
+      <form class="form" id="med-form" autocomplete="off">
+        <input type="hidden" id="f-id" />
+        <input type="hidden" id="f-kind" value="med" />
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-name">名称 <span class="req">*</span></label>
+            <input id="f-name" name="name" type="text" maxlength="60" required placeholder="例：布洛芬缓释胶囊" />
+          </div>
+          <div class="field">
+            <label for="f-category">分类 <span class="req">*</span></label>
+            <select id="f-category" name="category" required></select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-batch">批号 / 型号</label>
+            <input id="f-batch" name="batch" type="text" maxlength="40" placeholder="可选" />
+          </div>
+          <div class="field">
+            <label for="f-qty">数量</label>
+            <input id="f-qty" name="quantity" type="number" min="0" step="1" value="1" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-purchase">购入日期</label>
+            <input id="f-purchase" name="purchaseDate" type="date" />
+          </div>
+          <div class="field" id="row-expiry">
+            <label for="f-expiry">到期日期 <span class="req" id="req-expiry">*</span></label>
+            <input id="f-expiry" name="expiryDate" type="date" />
+          </div>
+          <div class="field" id="row-warranty" style="display:none">
+            <label for="f-warranty">保修期至</label>
+            <input id="f-warranty" name="warrantyDate" type="date" />
+          </div>
+        </div>
+
+        <div class="quick-row" aria-label="快捷设置到期日期">
+          <span class="muted">快捷设置：</span>
+          <button type="button" class="chip" data-quick="365">1 年后</button>
+          <button type="button" class="chip" data-quick="730">2 年后</button>
+          <button type="button" class="chip" data-quick="1095">3 年后</button>
+          <button type="button" class="chip" data-quick="0">今天</button>
+          <button type="button" class="chip" data-quick="-30">已过 30 天</button>
+          <button type="button" class="chip" data-quick="20">20 天后</button>
+        </div>
+
+        <div class="field">
+          <label for="f-note">备注</label>
+          <input id="f-note" name="note" type="text" maxlength="200" placeholder="例如：饭后服用 / 存放于阴凉处" />
+        </div>
+
+        <div class="form-error" id="form-error" role="alert" aria-live="polite"></div>
+
+        <footer class="form-actions">
+          <button type="button" class="btn btn-ghost" data-close>取消</button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">保存</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============== 确认弹窗 ============== -->
+  <div class="modal" id="confirm-modal" hidden aria-hidden="true" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal-overlay" data-close></div>
+    <div class="modal-panel card narrow">
+      <header class="modal-head">
+        <h2 id="confirm-title">请确认</h2>
+      </header>
+      <div class="confirm-body">
+        <p id="confirm-text">确定要删除吗？此操作不可撤销。</p>
+      </div>
+      <footer class="form-actions">
+        <button type="button" class="btn btn-ghost" data-close>取消</button>
+        <button type="button" class="btn btn-danger" id="confirm-ok">确认删除</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ============== QR 弹窗 ============== -->
+  <div class="modal" id="qr-modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title">
+    <div class="modal-overlay" data-close></div>
+    <div class="modal-panel card">
+      <header class="modal-head">
+        <h2 id="qr-modal-title">📱 医药箱二维码</h2>
+        <button class="icon-btn" type="button" data-close aria-label="关闭">✕</button>
+      </header>
+      <div class="qr-modal-body">
+        <p class="muted" id="qr-modal-meta">正在生成…</p>
+        <div class="qr-grid" id="qr-modal-body"></div>
+        <p class="muted small">提示：使用手机任意“扫一扫”即可在浏览器中只读查看。可下载 PNG 或打印贴在药箱表面。</p>
+        <footer class="form-actions" style="margin-top:16px">
+          <button type="button" class="btn btn-ghost" data-close id="qr-close-btn">关闭</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== Toast ============== -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./qrcode.min.js?v=3"></script>
+  <script src="./lz-string.min.js?v=3"></script>
+  <script src="./app.js?v=3"></script>
+</body>
+</html>
