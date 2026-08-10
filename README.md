@@ -2,8 +2,6 @@
 
 一个**零后端、零数据库、零付费**的家庭医药箱管理工具。包含药品和常用器材的保质期跟踪、二维码贴纸分享、扫码只读查看、移动端友好。
 
-> **部署推荐：GitHub Pages** → 详见 [DEPLOY.md](./DEPLOY.md)，5 分钟搞定永久链接。
-
 ![demo](https://img.shields.io/badge/部署-GitHub_Pages-brightgreen) ![demo](https://img.shields.io/badge/license-MIT-blue) ![demo](https://img.shields.io/badge/dependencies-0-orange)
 
 ## ✨ 功能
